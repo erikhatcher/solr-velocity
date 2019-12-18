@@ -1,0 +1,31 @@
+[
+    {
+      "name": "solritas",
+      "description": "templated response writer",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "date": "2019-12-13",
+          "artifacts": [
+            {
+              "url": "solritas-1.0.jar",
+              "sig": "KrfWzaFeeiZB2UNBNc0QHrpRNZqrM1K73Z8Qvtzxeq71Ie5wZ9s6GwiV4DnslFZ5mSKwSCY5ZCeV23pKxGMqug=="
+            }
+          ]
+        },
+        {
+          "version": "2.0.0",
+          "date": "2019-12-17",
+          "artifacts": [
+            {
+              "url": "solritas-2.0.jar",
+              "sig": "dSjasFirvN0Xx67eIt4HomO3jjzDZsD4C0ksZQK1avPXwkrTBZQujBhKApj3RasxTvyaBt5No/JafUgfJdj2ww=="
+            }
+          ]
+        }
+
+      ]
+    }
+  ]
+  
+  

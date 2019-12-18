@@ -1,0 +1,58 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.erikhatcher</groupId>
+  <artifactId>solritas</artifactId>
+  <packaging>jar</packaging>
+  <version>2.0</version>
+  <name>solritas</name>
+  <url>http://maven.apache.org</url>
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+
+<dependency>
+    <groupId>org.apache.solr</groupId>
+    <artifactId>solr-core</artifactId>
+    <version>8.3.0</version>
+</dependency>
+    
+  </dependencies>
+
+  <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.0.2</version>
+          <executions>
+              <execution>
+                  <id>copy-files-on-build</id>
+                  <phase>package</phase>
+                  <goals>
+                      <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                      <outputDirectory>${basedir}/repo</outputDirectory>
+                      <resources>
+                          <resource>
+                              <directory>target</directory>
+                              <include>*.jar</include>
+                              <filtering>false</filtering>
+                          </resource>
+                      </resources>
+                  </configuration>
+              </execution>
+          </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
