@@ -4,26 +4,50 @@
       "description": "templated response writer",
       "versions": [
         {
-          "version": "1.0.0",
-          "date": "2019-12-13",
+          "version": "0.9.5",
+          "date": "2019-12-18",
           "artifacts": [
             {
-              "url": "solritas-1.0.jar",
-              "sig": "KrfWzaFeeiZB2UNBNc0QHrpRNZqrM1K73Z8Qvtzxeq71Ie5wZ9s6GwiV4DnslFZ5mSKwSCY5ZCeV23pKxGMqug=="
-            }
-          ]
-        },
-        {
-          "version": "2.0.0",
-          "date": "2019-12-17",
-          "artifacts": [
+              "url": "solritas-0.9.5.jar",
+              "sig": "CfgSGUvcynPhG/fsdpLKor0GQ/C63VbrJTTHl0K9fD5jxoFaVcfAt4t8cP+9nKPmsWU4LUDtgnGk4MO/F4OW2w=="
+            },
             {
-              "url": "solritas-2.0.jar",
-              "sig": "dSjasFirvN0Xx67eIt4HomO3jjzDZsD4C0ksZQK1avPXwkrTBZQujBhKApj3RasxTvyaBt5No/JafUgfJdj2ww=="
+              "url": "velocity-engine-core-2.1.jar",
+              "sig": "EtMcu2iqHr2FA8Cbi//guwH5qOrl++MWUP9AbcRKxBsLPHvJTzjcIRCLad8nUK532COQtI0sNAtL9xXchdVBGQ=="
+            },
+            {
+              "url": "velocity-tools-generic-3.0.jar",
+              "sig": "A6lrnjH2wW/HS5WUr/SFMX1s0e2LcupzqMor8BMSRYGG11E/FRfrtTXlhY4HRAL3AXgwsKcdEndAAYDvpto7uw=="
             }
-          ]
+          ],
+          "manifest": {
+            "version-constraint": "8 - 9",
+            "plugins": [
+              {
+                "name": "response-writer",
+                "setup-command": {
+                  "path": "/api/collections/${collection}/config",
+                  "payload": {"add-queryresponsewriter": {"name": "solritas", "class": "solritas:org.apache.solr.response.VelocityResponseWriter"}},
+                  "method": "POST"
+                },
+                "uninstall-command": {
+                  "path": "/api/collections/${collection}/config",
+                  "payload": {"delete-queryresponsewriter": "solritas"},
+                  "method": "POST"
+                },
+                "verify-command": {
+                  "path": "/api/collections/${collection}/config/queryResponseWriter?componentName=solritas&meta=true",
+                  "method": "GET",
+                  "condition": "$['config'].['queryResponseWriter'].['solritas'].['_packageinfo_'].['version']",
+                  "expected": "${package-version}"
+                }
+              }
+            ],
+            "parameter-defaults": {
+              "VrW": "..."
+            }
+          }
         }
-
       ]
     }
   ]
