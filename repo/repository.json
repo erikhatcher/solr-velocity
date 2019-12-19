@@ -73,8 +73,8 @@
                 "verify-command": {
                   "path": "/api/collections/${collection}/config/requestHandler?componentName=/browse&meta=true",
                   "method": "GET",
-                  "condition": "$['config'].['requestHandler'].['/browse'].['_packageinfo_'].['version']",
-                  "expected": "${package-version}"
+                  "condition": "$['config'].['requestHandler'].['/browse'].['name']",
+                  "expected": "/browse"
                 }
               }
             ],
