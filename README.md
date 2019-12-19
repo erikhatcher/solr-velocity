@@ -11,7 +11,7 @@
 
     bin/post -c my_data -type text/csv -out yes -d $'id,title\n1,VrW'
 
-    open http://localhost:8983/solr/my_data/browse
+    open "http://localhost:8983/solr/my_data/browse?q=*:*"
 
 ## Building a release
 
