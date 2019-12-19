@@ -9,22 +9,15 @@
     bin/solr create -c my_data
     bin/solr package deploy -y solritas -collections my_data
 
-Add `&wt=solritas&layout=layout` to any search request to get results rendered as HTML search results.
+    bin/post -c my_data -type text/csv -out yes -d $'id,title\n1,VrW'
 
-Add a `/browse` handler:
-
-  curl -X POST -H 'Content-type:application/json' -d '{
-    "add-requesthandler": {
-      "name": "/browse",
-      "class": "solr.SearchHandler",
-      "defaults": { "wt": "solritas" ,"v.layout": "layout", "v.template": "browse" },
-      "useParams": "x"
-    }
-  }' http://localhost:8983/api/collections/my_data/config
-
-
-*TODO* copy/paste/adapt from Ishan's great https://github.com/chatman/question-answering README and example
+    open http://localhost:8983/solr/my_data/browse
 
 ## Building a release
 
     openssl dgst -sha1 -sign <path-to-privatekey.pem> <new-jar-file> | openssl enc -base64
+
+## TODO
+
+copy/paste/adapt from Ishan's great https://github.com/chatman/question-answering README and example
+

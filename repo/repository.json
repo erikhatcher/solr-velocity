@@ -27,12 +27,22 @@
                 "name": "response-writer",
                 "setup-command": {
                   "path": "/api/collections/${collection}/config",
-                  "payload": {"add-queryresponsewriter": {"name": "solritas", "class": "solritas:org.apache.solr.response.VelocityResponseWriter"}},
+                  "payload": {
+                    "add-queryresponsewriter": {"name": "solritas", "class": "solritas:org.apache.solr.response.VelocityResponseWriter"},
+                    "add-requesthandler": {
+                      "name": "/browse",
+                      "class": "solr.SearchHandler",
+                      "defaults": { "wt": "solritas" ,"v.layout": "layout", "v.template": "browse" }
+                    }
+                  },
                   "method": "POST"
                 },
                 "uninstall-command": {
                   "path": "/api/collections/${collection}/config",
-                  "payload": {"delete-queryresponsewriter": "solritas"},
+                  "payload": {
+                    "delete-queryresponsewriter": "solritas",
+                    "delete-requesthandler": "/browse"
+                  },
                   "method": "POST"
                 },
                 "verify-command": {
