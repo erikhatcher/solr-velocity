@@ -28,20 +28,14 @@
                 "setup-command": {
                   "path": "/api/collections/${collection}/config",
                   "payload": {
-                    "add-queryresponsewriter": {"name": "solritas", "class": "solritas:org.apache.solr.response.VelocityResponseWriter"},
-                    "add-requesthandler": {
-                      "name": "/browse",
-                      "class": "solr.SearchHandler",
-                      "defaults": { "wt": "solritas" ,"v.layout": "layout", "v.template": "browse" }
-                    }
+                    "add-queryresponsewriter": {"name": "solritas", "class": "solritas:org.apache.solr.response.VelocityResponseWriter"}
                   },
                   "method": "POST"
                 },
                 "uninstall-command": {
                   "path": "/api/collections/${collection}/config",
                   "payload": {
-                    "delete-queryresponsewriter": "solritas",
-                    "delete-requesthandler": "/browse"
+                    "delete-queryresponsewriter": "solritas"
                   },
                   "method": "POST"
                 },
@@ -49,6 +43,37 @@
                   "path": "/api/collections/${collection}/config/queryResponseWriter?componentName=solritas&meta=true",
                   "method": "GET",
                   "condition": "$['config'].['queryResponseWriter'].['solritas'].['_packageinfo_'].['version']",
+                  "expected": "${package-version}"
+                }
+              },
+              {
+                "name": "request-handler",
+                "setup-command": {
+                  "path": "/api/collections/${collection}/config",
+                  "payload": {
+                    "add-requesthandler": {
+                      "name": "/browse",
+                      "class": "solr.SearchHandler",
+                      "defaults": {
+                        "wt": "solritas",
+                        "v.layout": "layout",
+                        "v.template": "browse"
+                      }
+                    }
+                  },
+                  "method": "POST"
+                },
+                "uninstall-command": {
+                  "path": "/api/collections/${collection}/config",
+                  "payload": {
+                    "delete-requesthandler": "/browse"
+                  },
+                  "method": "POST"
+                },
+                "verify-command": {
+                  "path": "/api/collections/${collection}/config/requestHandler?componentName=/browse&meta=true",
+                  "method": "GET",
+                  "condition": "$['config'].['requestHandler'].['/browse'].['_packageinfo_'].['version']",
                   "expected": "${package-version}"
                 }
               }
