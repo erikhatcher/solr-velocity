@@ -1,90 +1,180 @@
 [
-    {
-      "name": "solritas",
-      "description": "templated response writer",
-      "versions": [
-        {
-          "version": "0.9.5",
-          "date": "2019-12-18",
-          "artifacts": [
+  {
+    "name": "solritas",
+    "description": "templated response writer",
+    "versions": [
+      {
+        "version": "0.9.5",
+        "date": "2019-12-18",
+        "artifacts": [
+          {
+            "url": "solritas-0.9.5.jar",
+            "sig": "CfgSGUvcynPhG/fsdpLKor0GQ/C63VbrJTTHl0K9fD5jxoFaVcfAt4t8cP+9nKPmsWU4LUDtgnGk4MO/F4OW2w=="
+          },
+          {
+            "url": "velocity-engine-core-2.1.jar",
+            "sig": "EtMcu2iqHr2FA8Cbi//guwH5qOrl++MWUP9AbcRKxBsLPHvJTzjcIRCLad8nUK532COQtI0sNAtL9xXchdVBGQ=="
+          },
+          {
+            "url": "velocity-tools-generic-3.0.jar",
+            "sig": "A6lrnjH2wW/HS5WUr/SFMX1s0e2LcupzqMor8BMSRYGG11E/FRfrtTXlhY4HRAL3AXgwsKcdEndAAYDvpto7uw=="
+          }
+        ],
+        "manifest": {
+          "version-constraint": "8 - 9",
+          "plugins": [
             {
-              "url": "solritas-0.9.5.jar",
-              "sig": "CfgSGUvcynPhG/fsdpLKor0GQ/C63VbrJTTHl0K9fD5jxoFaVcfAt4t8cP+9nKPmsWU4LUDtgnGk4MO/F4OW2w=="
+              "name": "response-writer",
+              "setup-command": {
+                "path": "/api/collections/${collection}/config",
+                "payload": {
+                  "add-queryresponsewriter": {
+                    "name": "solritas",
+                    "class": "solritas:org.apache.solr.response.VelocityResponseWriter"
+                  }
+                },
+                "method": "POST"
+              },
+              "uninstall-command": {
+                "path": "/api/collections/${collection}/config",
+                "payload": {
+                  "delete-queryresponsewriter": "solritas"
+                },
+                "method": "POST"
+              },
+              "verify-command": {
+                "path": "/api/collections/${collection}/config/queryResponseWriter?componentName=solritas&meta=true",
+                "method": "GET",
+                "condition": "$['config'].['queryResponseWriter'].['solritas'].['_packageinfo_'].['version']",
+                "expected": "${package-version}"
+              }
             },
             {
-              "url": "velocity-engine-core-2.1.jar",
-              "sig": "EtMcu2iqHr2FA8Cbi//guwH5qOrl++MWUP9AbcRKxBsLPHvJTzjcIRCLad8nUK532COQtI0sNAtL9xXchdVBGQ=="
+              "name": "request-handler",
+              "setup-command": {
+                "path": "/api/collections/${collection}/config",
+                "payload": {
+                  "add-requesthandler": {
+                    "name": "/browse",
+                    "class": "solr.SearchHandler",
+                    "defaults": {
+                      "debug": "true",
+                      "df": "${DF}"
+                    },
+                    "useParams": "query,facets,solritas,browse"
+                  }
+                },
+                "method": "POST"
+              },
+              "uninstall-command": {
+                "path": "/api/collections/${collection}/config",
+                "payload": {
+                  "delete-requesthandler": "/browse"
+                },
+                "method": "POST"
+              },
+              "verify-command": {
+                "path": "/api/collections/${collection}/config/requestHandler?componentName=/browse&meta=true",
+                "method": "GET",
+                "condition": "$['config'].['requestHandler'].['/browse'].['name']",
+                "expected": "/browse"
+              }
             },
             {
-              "url": "velocity-tools-generic-3.0.jar",
-              "sig": "A6lrnjH2wW/HS5WUr/SFMX1s0e2LcupzqMor8BMSRYGG11E/FRfrtTXlhY4HRAL3AXgwsKcdEndAAYDvpto7uw=="
+              "name": "paramset-query",
+              "setup-command": {
+                "path": "/api/collections/${collection}/config/params",
+                "payload": {
+                  "set": {
+                    "query": {
+                      "defType": "edismax",
+                      "q.alt": "*:*",
+                      "rows": "10",
+                      "fl": "*,score"
+                    }
+                  }
+                },
+                "method": "POST"
+              },
+              "uninstall-command": {
+                "path": "/api/collections/${collection}/config/params",
+                "payload": {
+                  "unset": "query"
+                },
+                "method": "POST"
+              },
+              "verify-command": {
+                "path": "/api/collections/${collection}/config/params/query",
+                "method": "GET",
+                "condition": "$['response'].['params'].['query'].['defType']",
+                "expected": "edismax"
+              }
+            },
+            {
+              "name": "paramset-facets",
+              "setup-command": {
+                "path": "/api/collections/${collection}/config/params",
+                "payload": {
+                  "set": {
+                    "facets": {
+                      "facet": "on",
+                      "facet.mincount": "1"
+                    }
+                  }
+                },
+                "method": "POST"
+              },
+              "uninstall-command": {
+                "path": "/api/collections/${collection}/config/params",
+                "payload": {
+                  "unset": "facets"
+                },
+                "method": "POST"
+              },
+              "verify-command": {
+                "path": "/api/collections/${collection}/config/params/facets",
+                "method": "GET",
+                "condition": "$['response'].['params'].['facets'].['facet']",
+                "expected": "on"
+              }
+            },
+            {
+              "name": "paramset-velocity",
+              "setup-command": {
+                "path": "/api/collections/${collection}/config/params",
+                "payload": {
+                  "set": {
+                    "solritas": {
+                      "wt": "solritas",
+                      "v.template": "browse",
+                      "v.layout": "layout"
+                    }
+                  }
+                },
+                "method": "POST"
+              },
+              "uninstall-command": {
+                "path": "/api/collections/${collection}/config/params",
+                "payload": {
+                  "unset": "solritas"
+                },
+                "method": "POST"
+              },
+              "verify-command": {
+                "path": "/api/collections/${collection}/config/params/solritas",
+                "method": "GET",
+                "condition": "$['response'].['params'].['solritas'].['wt']",
+                "expected": "solritas"
+              }
             }
           ],
-          "manifest": {
-            "version-constraint": "8 - 9",
-            "plugins": [
-              {
-                "name": "response-writer",
-                "setup-command": {
-                  "path": "/api/collections/${collection}/config",
-                  "payload": {
-                    "add-queryresponsewriter": {"name": "solritas", "class": "solritas:org.apache.solr.response.VelocityResponseWriter"}
-                  },
-                  "method": "POST"
-                },
-                "uninstall-command": {
-                  "path": "/api/collections/${collection}/config",
-                  "payload": {
-                    "delete-queryresponsewriter": "solritas"
-                  },
-                  "method": "POST"
-                },
-                "verify-command": {
-                  "path": "/api/collections/${collection}/config/queryResponseWriter?componentName=solritas&meta=true",
-                  "method": "GET",
-                  "condition": "$['config'].['queryResponseWriter'].['solritas'].['_packageinfo_'].['version']",
-                  "expected": "${package-version}"
-                }
-              },
-              {
-                "name": "request-handler",
-                "setup-command": {
-                  "path": "/api/collections/${collection}/config",
-                  "payload": {
-                    "add-requesthandler": {
-                      "name": "/browse",
-                      "class": "solr.SearchHandler",
-                      "defaults": {
-                        "wt": "solritas",
-                        "v.layout": "layout",
-                        "v.template": "browse"
-                      }
-                    }
-                  },
-                  "method": "POST"
-                },
-                "uninstall-command": {
-                  "path": "/api/collections/${collection}/config",
-                  "payload": {
-                    "delete-requesthandler": "/browse"
-                  },
-                  "method": "POST"
-                },
-                "verify-command": {
-                  "path": "/api/collections/${collection}/config/requestHandler?componentName=/browse&meta=true",
-                  "method": "GET",
-                  "condition": "$['config'].['requestHandler'].['/browse'].['name']",
-                  "expected": "/browse"
-                }
-              }
-            ],
-            "parameter-defaults": {
-              "VrW": "..."
-            }
+          "parameter-defaults": {
+            "DF": "_text_"
           }
         }
-      ]
-    }
-  ]
+      }
+    ]
+  }
+]
   
   
