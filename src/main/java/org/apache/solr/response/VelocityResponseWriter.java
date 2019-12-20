@@ -67,14 +67,6 @@ import org.slf4j.LoggerFactory;
 import static org.apache.solr.common.params.CommonParams.SORT;
 
 public class VelocityResponseWriter implements QueryResponseWriter, SolrCoreAware {
-  // init param names, these are _only_ loaded at init time (no per-request control of these)
-  //   - multiple different named writers could be created with different init params
-  public static final String TEMPLATE_BASE_DIR = "template.base.dir";
-  public static final String PROPERTIES_FILE = "init.properties.file";
-
-  // System property names, these are _only_ loaded at node startup (no per-request control of these)
-  public static final String SOLR_RESOURCE_LOADER_ENABLED = "velocity.resourceloader.solr.enabled";
-
   // request param names
   public static final String TEMPLATE = "v.template";
   public static final String LAYOUT = "v.layout";
@@ -87,54 +79,14 @@ public class VelocityResponseWriter implements QueryResponseWriter, SolrCoreAwar
   public static final String DEFAULT_CONTENT_TYPE = "text/html;charset=UTF-8";
   public static final String JSON_CONTENT_TYPE = "application/json;charset=UTF-8";
 
-  private File fileResourceLoaderBaseDir;
-  private String initPropertiesFileName;  // used just to hold from init() to inform()
-
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  private Properties velocityInitProps = new Properties();
-  private Map<String,String> customTools = new HashMap<String,String>();
 
   @Override
   public void init(NamedList args) {
-    log.warn("VelocityResponseWriter is deprecated. This may be removed in future Solr releases. Please SOLR-14065.");
-    fileResourceLoaderBaseDir = null;
-    String templateBaseDir = (String) args.get(TEMPLATE_BASE_DIR);
-
-    if (templateBaseDir != null && !templateBaseDir.isEmpty()) {
-      fileResourceLoaderBaseDir = new File(templateBaseDir).getAbsoluteFile();
-      if (!fileResourceLoaderBaseDir.exists()) { // "*not* exists" condition!
-        log.warn(TEMPLATE_BASE_DIR + " specified does not exist: " + fileResourceLoaderBaseDir);
-        fileResourceLoaderBaseDir = null;
-      } else {
-        if (!fileResourceLoaderBaseDir.isDirectory()) { // "*not* a directory" condition
-          log.warn(TEMPLATE_BASE_DIR + " specified is not a directory: " + fileResourceLoaderBaseDir);
-          fileResourceLoaderBaseDir = null;
-        }
-      }
-    }
-
-    initPropertiesFileName = (String) args.get(PROPERTIES_FILE);
-
-    NamedList tools = (NamedList)args.get("tools");
-    if (tools != null) {
-      for(Object t : tools) {
-        Map.Entry tool = (Map.Entry)t;
-        customTools.put(tool.getKey().toString(), tool.getValue().toString());
-      }
-    }
   }
 
   @Override
   public void inform(SolrCore core) {
-    // need to leverage SolrResourceLoader, so load init.properties.file here instead of init()
-    if (initPropertiesFileName != null) {
-      InputStream is = null;
-      try {
-        velocityInitProps.load(new InputStreamReader(core.getResourceLoader().openResource(initPropertiesFileName), StandardCharsets.UTF_8));
-      } catch (IOException e) {
-        log.warn("Error loading " + PROPERTIES_FILE + " specified property file: " + initPropertiesFileName, e);
-      }
-    }
   }
 
   @Override
@@ -259,34 +211,6 @@ public class VelocityResponseWriter implements QueryResponseWriter, SolrCoreAwar
     resourceTool.configure(toolConfig);
     context.put("resource", resourceTool);
 
-    if (request.getCore().getCoreDescriptor().isConfigSetTrusted()) {
-      // Load custom tools, only if in a trusted configset
-
-      /*
-          // Custom tools, specified in config as:
-              <queryResponseWriter name="velocityWithCustomTools" class="solr.VelocityResponseWriter">
-                <lst name="tools">
-                  <str name="mytool">com.example.solr.velocity.MyTool</str>
-                </lst>
-              </queryResponseWriter>
-      */
-      // Custom tools can override any of the built-in tools provided above, by registering one with the same name
-      if (request.getCore().getCoreDescriptor().isConfigSetTrusted()) {
-        for (Map.Entry<String, String> entry : customTools.entrySet()) {
-          String name = entry.getKey();
-          // TODO: at least log a warning when one of the *fixed* tools classes is same name with a custom one, currently silently ignored
-          Object customTool = SolrCore.createInstance(entry.getValue(), Object.class, "VrW custom tool: " + name, request.getCore(), request.getCore().getResourceLoader());
-          if (customTool instanceof LocaleConfig) {
-            ((LocaleConfig) customTool).configure(toolConfig);
-          }
-          context.put(name, customTool);
-        }
-      }
-
-      // custom tools _cannot_ override context objects added below, like $request and $response
-    }
-
-
     // Turn the SolrQueryResponse into a SolrResponse.
     // QueryResponse has lots of conveniences suitable for a view
     // Problem is, which SolrResponse class to use?
@@ -352,10 +276,6 @@ public class VelocityResponseWriter implements QueryResponseWriter, SolrCoreAwar
       directory, or within a trusted configset's velocity/ directory.
      */
     ArrayList<String> loaders = new ArrayList<String>();
-    if ((fileResourceLoaderBaseDir != null) && trustedMode) {
-      loaders.add("file");
-      engine.setProperty(RuntimeConstants.FILE_RESOURCE_LOADER_PATH, fileResourceLoaderBaseDir.getAbsolutePath());
-    }
     if (trustedMode) {
       // The solr resource loader serves templates under a velocity/ subtree from <lib>, conf/,
       // or SolrCloud's configuration tree.  Or rather the other way around, other resource loaders are rooted
@@ -394,18 +314,6 @@ public class VelocityResponseWriter implements QueryResponseWriter, SolrCoreAwar
     engine.addProperty(RuntimeConstants.INTROSPECTOR_RESTRICT_CLASSES,"java.lang.ThreadLocal");
     engine.addProperty(RuntimeConstants.INTROSPECTOR_RESTRICT_CLASSES,"org.apache.solr.core.SolrResourceLoader");
     engine.addProperty(RuntimeConstants.INTROSPECTOR_RESTRICT_CLASSES,"org.apache.solr.core.CoreContainer");
-
-    if (trustedMode) {
-      // Work around VELOCITY-908 with Velocity not handling locales properly
-      Object spaceGobblingInitProperty = velocityInitProps.get(RuntimeConstants.SPACE_GOBBLING);
-      if (spaceGobblingInitProperty != null) {
-        // If there is an init property, uppercase it before Velocity.
-        velocityInitProps.put(RuntimeConstants.SPACE_GOBBLING,
-            String.valueOf(spaceGobblingInitProperty).toUpperCase(Locale.ROOT));
-      }
-      // bring in any custom properties too
-      engine.setProperties(velocityInitProps);
-    }
 
     engine.init();
 
